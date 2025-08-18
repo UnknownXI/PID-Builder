@@ -1,0 +1,254 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const palette = document.getElementById('palette');
+    const canvas = document.getElementById('canvas');
+    const modal = document.getElementById('editor-modal');
+    const closeButton = document.querySelector('.close-button');
+    const saveButton = document.getElementById('save-properties');
+    const componentIdInput = document.getElementById('component-id');
+
+    let draggedType = null;
+    let componentCounter = 0;
+    let selectedComponent = null;
+
+    // Line drawing state
+    let isDrawingLine = false;
+    let lineInProgress = null;
+    let startSnapPoint = null;
+
+    // --- Drag and Drop Logic ---
+    palette.addEventListener('dragstart', (e) => {
+        if (e.target.classList.contains('component')) {
+            draggedType = e.target.dataset.type;
+        }
+    });
+
+    canvas.addEventListener('dragover', (e) => {
+        e.preventDefault();
+    });
+
+    canvas.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const { x, y } = getCanvasCoords(e);
+        createComponent(draggedType, x, y);
+        draggedType = null;
+    });
+
+    function getCanvasCoords(e) {
+        const canvasRect = canvas.getBoundingClientRect();
+        return {
+            x: e.clientX - canvasRect.left,
+            y: e.clientY - canvasRect.top
+        };
+    }
+
+    function createComponent(type, x, y) {
+        componentCounter++;
+        const componentId = `${type.toUpperCase()}-${componentCounter}`;
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.setAttribute('class', 'placed-component');
+        group.setAttribute('transform', `translate(${x - 50}, ${y - 50})`);
+        group.dataset.id = componentId;
+
+        let componentSVG;
+        let snapPoints = [];
+
+        if (type === 'pump') {
+            componentSVG = `
+                <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="#fff" />
+                <path d="M 50 10 L 50 50 L 90 50" stroke="black" stroke-width="3" fill="none" />
+            `;
+            snapPoints = [{x: 10, y: 50}, {x: 90, y: 50}];
+        } else if (type === 'tank') {
+            componentSVG = `<rect x="10" y="10" width="80" height="80" stroke="black" stroke-width="3" fill="#fff" />`;
+            snapPoints = [{x: 10, y: 50}, {x: 90, y: 50}, {x: 50, y: 10}, {x: 50, y: 90}];
+        }
+
+        group.innerHTML = componentSVG;
+
+        // Add label
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', 50);
+        label.setAttribute('y', 115);
+        label.setAttribute('class', 'component-label');
+        label.textContent = componentId;
+        group.appendChild(label);
+
+        // Add snap points
+        snapPoints.forEach(p => {
+            const snapPoint = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            snapPoint.setAttribute('cx', p.x);
+            snapPoint.setAttribute('cy', p.y);
+            snapPoint.setAttribute('r', 5);
+            snapPoint.setAttribute('class', 'snap-point');
+            group.appendChild(snapPoint);
+        });
+
+        canvas.appendChild(group);
+        makeDraggable(group);
+        addEventListenersToComponent(group);
+    }
+
+    function makeDraggable(element) {
+        let isDragging = false;
+        let offset = { x: 0, y: 0 };
+
+        element.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('snap-point')) return;
+            isDragging = true;
+            const transform = element.getAttribute('transform');
+            const parts = /translate\(([^,]+),([^)]+)\)/.exec(transform);
+            const currentX = parseFloat(parts[1]);
+            const currentY = parseFloat(parts[2]);
+            offset.x = e.clientX - currentX;
+            offset.y = e.clientY - currentY;
+            e.stopPropagation();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const newX = e.clientX - offset.x;
+                const newY = e.clientY - offset.y;
+                element.setAttribute('transform', `translate(${newX}, ${newY})`);
+                updateLinesForComponent(element);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+    }
+
+    function addEventListenersToComponent(component) {
+        // Double click to edit
+        component.addEventListener('dblclick', () => {
+            selectedComponent = component;
+            componentIdInput.value = component.dataset.id;
+            modal.style.display = 'block';
+        });
+
+        // Snap point click to start/end line
+        component.querySelectorAll('.snap-point').forEach(snapPoint => {
+            snapPoint.addEventListener('click', (e) => {
+                handleSnapPointClick(snapPoint);
+                e.stopPropagation();
+            });
+        });
+    }
+
+    // --- Line Drawing Logic ---
+    function handleSnapPointClick(snapPoint) {
+        if (!isDrawingLine) {
+            // Start drawing a new line
+            isDrawingLine = true;
+            startSnapPoint = snapPoint;
+            const startCoords = getAbsoluteSnapPointCoords(snapPoint);
+
+            lineInProgress = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            lineInProgress.setAttribute('class', 'line-in-progress');
+            lineInProgress.setAttribute('x1', startCoords.x);
+            lineInProgress.setAttribute('y1', startCoords.y);
+            lineInProgress.setAttribute('x2', startCoords.x);
+            lineInProgress.setAttribute('y2', startCoords.y);
+            canvas.insertBefore(lineInProgress, canvas.firstChild); // Insert at the beginning
+        } else {
+            // Finish drawing the line
+            const endCoords = getAbsoluteSnapPointCoords(snapPoint);
+            const startCoords = getAbsoluteSnapPointCoords(startSnapPoint);
+
+            const permanentLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            permanentLine.setAttribute('class', 'connection-line');
+            permanentLine.setAttribute('x1', startCoords.x);
+            permanentLine.setAttribute('y1', startCoords.y);
+            permanentLine.setAttribute('x2', endCoords.x);
+            permanentLine.setAttribute('y2', endCoords.y);
+
+            // Store connection info
+            permanentLine.dataset.startComponent = startSnapPoint.parentElement.dataset.id;
+            permanentLine.dataset.endComponent = snapPoint.parentElement.dataset.id;
+            permanentLine.dataset.startX = startSnapPoint.getAttribute('cx');
+            permanentLine.dataset.startY = startSnapPoint.getAttribute('cy');
+            permanentLine.dataset.endX = snapPoint.getAttribute('cx');
+            permanentLine.dataset.endY = snapPoint.getAttribute('cy');
+
+            canvas.insertBefore(permanentLine, canvas.firstChild);
+
+            // Cleanup
+            lineInProgress.remove();
+            lineInProgress = null;
+            isDrawingLine = false;
+            startSnapPoint = null;
+        }
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+        if (isDrawingLine && lineInProgress) {
+            const coords = getCanvasCoords(e);
+            lineInProgress.setAttribute('x2', coords.x);
+            lineInProgress.setAttribute('y2', coords.y);
+        }
+    });
+
+    function getAbsoluteSnapPointCoords(snapPoint) {
+        const component = snapPoint.parentElement;
+        const transform = component.getAttribute('transform');
+        const parts = /translate\(([^,]+),([^)]+)\)/.exec(transform);
+        const [translateX, translateY] = [parseFloat(parts[1]), parseFloat(parts[2])];
+
+        const cx = parseFloat(snapPoint.getAttribute('cx'));
+        const cy = parseFloat(snapPoint.getAttribute('cy'));
+
+        return { x: translateX + cx, y: translateY + cy };
+    }
+
+    function updateLinesForComponent(component) {
+        const componentId = component.dataset.id;
+        document.querySelectorAll('.connection-line').forEach(line => {
+            if (line.dataset.startComponent === componentId) {
+                const startSnapPoint = findSnapPoint(component, line.dataset.startX, line.dataset.startY);
+                const newCoords = getAbsoluteSnapPointCoords(startSnapPoint);
+                line.setAttribute('x1', newCoords.x);
+                line.setAttribute('y1', newCoords.y);
+            }
+            if (line.dataset.endComponent === componentId) {
+                const endSnapPoint = findSnapPoint(component, line.dataset.endX, line.dataset.endY);
+                const newCoords = getAbsoluteSnapPointCoords(endSnapPoint);
+                line.setAttribute('x2', newCoords.x);
+                line.setAttribute('y2', newCoords.y);
+            }
+        });
+    }
+
+    function findSnapPoint(component, x, y) {
+        return component.querySelector(`.snap-point[cx="${x}"][cy="${y}"]`);
+    }
+
+    // --- Editor Modal Logic ---
+    closeButton.addEventListener('click', () => {
+        modal.style.display = 'none';
+        selectedComponent = null;
+    });
+
+    saveButton.addEventListener('click', () => {
+        if (selectedComponent) {
+            const newId = componentIdInput.value.trim();
+            if (newId) {
+                const oldId = selectedComponent.dataset.id;
+                selectedComponent.dataset.id = newId;
+                selectedComponent.querySelector('.component-label').textContent = newId;
+
+                // Update connected lines
+                document.querySelectorAll('.connection-line').forEach(line => {
+                    if (line.dataset.startComponent === oldId) line.dataset.startComponent = newId;
+                    if (line.dataset.endComponent === oldId) line.dataset.endComponent = newId;
+                });
+            }
+        }
+        modal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target == modal) {
+            modal.style.display = 'none';
+        }
+    });
+});

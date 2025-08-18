@@ -1,0 +1,114 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f0f2f5;
+    user-select: none;
+}
+
+h1, h2 {
+    text-align: center;
+    color: #333;
+}
+
+#container {
+    display: flex;
+    border: 1px solid #ccc;
+    height: 80vh;
+}
+
+#palette {
+    width: 200px;
+    border-right: 1px solid #ccc;
+    padding: 10px;
+    background-color: #fff;
+    overflow-y: auto;
+}
+
+.component {
+    cursor: grab;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.component svg {
+    width: 100px;
+    height: 100px;
+}
+
+#canvas-container {
+    flex-grow: 1;
+    position: relative;
+    overflow: hidden;
+    background-color: #e8eaf6;
+}
+
+#canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.placed-component {
+    position: absolute;
+    cursor: move;
+}
+
+.snap-point {
+    fill: #ff4081;
+    stroke: #fff;
+    stroke-width: 2;
+    cursor: crosshair;
+    transition: r 0.2s;
+}
+
+.snap-point:hover {
+    r: 8; /* Make snap point bigger on hover */
+}
+
+.line-in-progress {
+    stroke: #333;
+    stroke-width: 2;
+    stroke-dasharray: 5,5;
+}
+
+.connection-line {
+    stroke: #000;
+    stroke-width: 3;
+    fill: none;
+}
+
+.component-label {
+    font-size: 14px;
+    font-weight: bold;
+    text-anchor: middle;
+    fill: #0d47a1;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 300px;
+    border-radius: 5px;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}

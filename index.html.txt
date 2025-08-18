@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple P&ID Builder</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Simple P&ID Builder</h1>
+    <div id="container">
+        <div id="palette">
+            <h2>Components</h2>
+            <div class="component" draggable="true" data-type="pump">
+                <svg viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="white" />
+                    <path d="M 50 10 L 50 50 L 90 50" stroke="black" stroke-width="3" fill="none" />
+                    <text x="50" y="70" text-anchor="middle" font-size="16">PUMP</text>
+                </svg>
+            </div>
+            <div class="component" draggable="true" data-type="tank">
+                <svg viewBox="0 0 100 100">
+                    <rect x="10" y="10" width="80" height="80" stroke="black" stroke-width="3" fill="white" />
+                    <text x="50" y="55" text-anchor="middle" font-size="16">TANK</text>
+                </svg>
+            </div>
+        </div>
+        <div id="canvas-container">
+            <svg id="canvas"></svg>
+        </div>
+    </div>
+
+    <div id="editor-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Edit Component</h2>
+            <label for="component-id">ID Tag:</label>
+            <input type="text" id="component-id">
+            <button id="save-properties">Save</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
