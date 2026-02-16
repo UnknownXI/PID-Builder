@@ -24,6 +24,19 @@ app.use('/api/templates', require('./routes/templates'));
 app.use('/api/ctops', require('./routes/ctops'));
 app.use('/api/search', require('./routes/search'));
 
+// Local file download route (for local storage mode)
+const { getAbsolutePath } = require('./services/storage');
+app.get('/api/storage/download', (req, res) => {
+  try {
+    const key = req.query.key;
+    if (!key) return res.status(400).json({ error: 'key is required' });
+    const filePath = getAbsolutePath(key);
+    res.download(filePath);
+  } catch (err) {
+    res.status(404).json({ error: 'File not found' });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

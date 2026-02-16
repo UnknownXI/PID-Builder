@@ -153,6 +153,23 @@ CREATE TABLE template_placeholders (
 CREATE INDEX idx_tp_template ON template_placeholders(template_id);
 
 -- ============================================================
+-- FILLED TEMPLATES (must be created before ctop_items which references it)
+-- ============================================================
+CREATE TABLE filled_templates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    template_id UUID NOT NULL REFERENCES templates(id) ON DELETE CASCADE,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    storage_key VARCHAR(1000), -- S3 key to generated .docx
+    filled_by UUID NOT NULL REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_ft_template ON filled_templates(template_id);
+CREATE INDEX idx_ft_project ON filled_templates(project_id);
+
+-- ============================================================
 -- CTOPs (Custom Document Packages)
 -- ============================================================
 CREATE TABLE ctops (
@@ -183,21 +200,6 @@ CREATE TABLE ctop_items (
 );
 
 CREATE INDEX idx_ci_ctop ON ctop_items(ctop_id);
-
--- Filled template instances (generated documents)
-CREATE TABLE filled_templates (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    template_id UUID NOT NULL REFERENCES templates(id) ON DELETE CASCADE,
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    name VARCHAR(255) NOT NULL,
-    storage_key VARCHAR(1000), -- S3 key to generated .docx
-    filled_by UUID NOT NULL REFERENCES users(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_ft_template ON filled_templates(template_id);
-CREATE INDEX idx_ft_project ON filled_templates(project_id);
 
 -- Values used to fill placeholders
 CREATE TABLE filled_template_values (
