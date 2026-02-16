@@ -57,8 +57,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`PID-Builder server running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`PID-Builder server running on http://0.0.0.0:${PORT}`);
 });
 
 module.exports = app;
