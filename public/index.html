@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PID-Builder | File Organization Tool</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- AUTH SCREEN -->
+  <div id="auth-screen" class="screen active">
+    <div class="auth-container">
+      <h1>PID-Builder</h1>
+      <p class="subtitle">Engineering Document Management</p>
+
+      <div id="login-form" class="auth-form">
+        <h2>Sign In</h2>
+        <input type="email" id="login-email" placeholder="Email" autocomplete="email">
+        <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
+        <button id="login-btn" class="btn btn-primary">Sign In</button>
+        <p class="auth-switch">Don't have an account? <a href="#" id="show-register">Register</a></p>
+      </div>
+
+      <div id="register-form" class="auth-form hidden">
+        <h2>Register</h2>
+        <input type="text" id="register-name" placeholder="Full Name" autocomplete="name">
+        <input type="email" id="register-email" placeholder="Email" autocomplete="email">
+        <input type="password" id="register-password" placeholder="Password" autocomplete="new-password">
+        <button id="register-btn" class="btn btn-primary">Register</button>
+        <p class="auth-switch">Already have an account? <a href="#" id="show-login">Sign In</a></p>
+      </div>
+
+      <div id="auth-error" class="error-msg hidden"></div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="app-screen" class="screen">
+    <!-- Top Nav -->
+    <header class="top-nav">
+      <div class="nav-left">
+        <h1 class="logo">PID-Builder</h1>
+        <select id="project-selector" class="project-select">
+          <option value="">Select Project...</option>
+        </select>
+        <button id="new-project-btn" class="btn btn-sm" title="New Project">+ Project</button>
+      </div>
+      <div class="nav-right">
+        <div class="search-bar">
+          <input type="text" id="global-search" placeholder="Search files, templates...">
+          <button id="search-btn" class="btn btn-sm">Search</button>
+        </div>
+        <span id="user-name" class="user-info"></span>
+        <button id="logout-btn" class="btn btn-sm btn-outline">Logout</button>
+      </div>
+    </header>
+
+    <!-- Sidebar + Content -->
+    <div class="app-body">
+      <!-- Sidebar Navigation -->
+      <aside class="sidebar">
+        <nav class="sidebar-nav">
+          <button class="nav-item active" data-view="files">
+            <span class="nav-icon">&#128193;</span> Files
+          </button>
+          <button class="nav-item" data-view="templates">
+            <span class="nav-icon">&#128196;</span> Templates
+          </button>
+          <button class="nav-item" data-view="ctops">
+            <span class="nav-icon">&#128230;</span> CTOPs
+          </button>
+          <button class="nav-item" data-view="labels">
+            <span class="nav-icon">&#127991;</span> Labels
+          </button>
+        </nav>
+
+        <!-- Folder Tree (visible in files view) -->
+        <div id="folder-tree-section" class="sidebar-section">
+          <div class="section-header">
+            <h3>Folders</h3>
+            <button id="new-folder-btn" class="btn btn-xs" title="New Folder">+</button>
+          </div>
+          <div id="folder-tree" class="folder-tree"></div>
+        </div>
+
+        <!-- Label Filter (visible in files view) -->
+        <div id="label-filter-section" class="sidebar-section">
+          <h3>Filter by Label</h3>
+          <div id="label-filters" class="label-filters"></div>
+        </div>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="content">
+        <!-- FILES VIEW -->
+        <div id="files-view" class="view active">
+          <div class="view-header">
+            <h2 id="files-title">All Files</h2>
+            <div class="view-actions">
+              <button id="upload-btn" class="btn btn-primary">Upload Files</button>
+              <input type="file" id="file-input" multiple hidden>
+            </div>
+          </div>
+          <div id="files-list" class="files-grid"></div>
+          <div id="files-empty" class="empty-state hidden">
+            <p>No files yet. Upload files to get started.</p>
+          </div>
+        </div>
+
+        <!-- TEMPLATES VIEW -->
+        <div id="templates-view" class="view">
+          <div class="view-header">
+            <h2>Templates</h2>
+            <div class="view-actions">
+              <button id="upload-template-btn" class="btn btn-primary">Upload Template</button>
+              <input type="file" id="template-input" accept=".docx" hidden>
+            </div>
+          </div>
+          <div id="templates-list" class="templates-grid"></div>
+          <div id="templates-empty" class="empty-state hidden">
+            <p>No templates yet. Upload a Word document (.docx) with &lt;&lt;PLACEHOLDERS&gt;&gt;.</p>
+          </div>
+        </div>
+
+        <!-- CTOPs VIEW -->
+        <div id="ctops-view" class="view">
+          <div class="view-header">
+            <h2>Document Packages (CTOPs)</h2>
+            <div class="view-actions">
+              <button id="new-ctop-btn" class="btn btn-primary">New CTOP</button>
+            </div>
+          </div>
+          <div id="ctops-list" class="ctops-grid"></div>
+          <div id="ctops-empty" class="empty-state hidden">
+            <p>No CTOPs yet. Create a document package to combine files and templates.</p>
+          </div>
+        </div>
+
+        <!-- LABELS VIEW -->
+        <div id="labels-view" class="view">
+          <div class="view-header">
+            <h2>Labels</h2>
+            <div class="view-actions">
+              <button id="new-label-btn" class="btn btn-primary">New Label</button>
+            </div>
+          </div>
+          <div id="labels-list" class="labels-grid"></div>
+        </div>
+
+        <!-- SEARCH RESULTS VIEW -->
+        <div id="search-view" class="view">
+          <div class="view-header">
+            <h2 id="search-title">Search Results</h2>
+          </div>
+          <div id="search-results" class="search-results"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <!-- New Project Modal -->
+  <div id="modal-project" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h2>New Project</h2>
+      <input type="text" id="project-name" placeholder="Project Name">
+      <textarea id="project-desc" placeholder="Description (optional)"></textarea>
+      <div class="modal-actions">
+        <button class="btn btn-outline modal-cancel">Cancel</button>
+        <button id="create-project-btn" class="btn btn-primary">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Folder Modal -->
+  <div id="modal-folder" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h2>New Folder</h2>
+      <input type="text" id="folder-name" placeholder="Folder Name">
+      <textarea id="folder-desc" placeholder="Description (optional)"></textarea>
+      <div class="modal-actions">
+        <button class="btn btn-outline modal-cancel">Cancel</button>
+        <button id="create-folder-btn" class="btn btn-primary">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Label Modal -->
+  <div id="modal-label" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h2>New Label</h2>
+      <input type="text" id="label-name" placeholder="Label Name">
+      <div class="color-picker">
+        <label>Color:</label>
+        <input type="color" id="label-color" value="#3B82F6">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline modal-cancel">Cancel</button>
+        <button id="create-label-btn" class="btn btn-primary">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New CTOP Modal -->
+  <div id="modal-ctop" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h2>New Document Package (CTOP)</h2>
+      <input type="text" id="ctop-name" placeholder="Package Name">
+      <textarea id="ctop-desc" placeholder="Description (optional)"></textarea>
+      <div class="modal-actions">
+        <button class="btn btn-outline modal-cancel">Cancel</button>
+        <button id="create-ctop-btn" class="btn btn-primary">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fill Template Modal -->
+  <div id="modal-fill-template" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-wide">
+      <h2 id="fill-template-title">Fill Template</h2>
+      <div id="fill-template-fields" class="template-fields"></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline modal-cancel">Cancel</button>
+        <button id="fill-template-btn" class="btn btn-primary">Generate Document</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- File Detail Modal -->
+  <div id="modal-file-detail" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-wide">
+      <h2 id="file-detail-title">File Details</h2>
+      <div id="file-detail-body" class="file-detail"></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline modal-cancel">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTOP Detail Modal -->
+  <div id="modal-ctop-detail" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-wide">
+      <h2 id="ctop-detail-title">CTOP Details</h2>
+      <div id="ctop-detail-body" class="ctop-detail"></div>
+      <div class="ctop-add-section">
+        <h3>Add Items</h3>
+        <select id="ctop-add-type">
+          <option value="file">File from Storage</option>
+          <option value="template">Template</option>
+          <option value="filled_template">Filled Template</option>
+        </select>
+        <select id="ctop-add-item"></select>
+        <button id="ctop-add-btn" class="btn btn-sm btn-primary">Add</button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline modal-cancel">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
